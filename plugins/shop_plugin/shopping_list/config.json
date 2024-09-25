@@ -1,0 +1,25 @@
+{
+    "schema": 1,
+    "description": "Create a shopping list for the user needs.",
+    "execution_settings": {
+        "default": {
+            "max_tokens": 200,
+            "temperature": 0.4,
+            "top_p": 0.0,
+            "presence_penalty": 0.0,
+            "frequency_penalty": 0.0
+        }
+    },
+    "input_variables": [
+        {
+            "name": "user_needs",
+            "description": "The user's needs.",
+            "default": ""
+        },
+        {
+            "name": "supermarket",
+            "description": "Name of the supermarket",
+            "default": ""
+        }
+    ]
+}

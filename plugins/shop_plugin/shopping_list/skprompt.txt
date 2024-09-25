@@ -1,0 +1,1 @@
+Create a shopping list for the supermatket {{$supermaket}} based on the user needs {{$user_needs}}
