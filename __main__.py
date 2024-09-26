@@ -22,13 +22,17 @@ def init_styles():
     
     ui.add_css(r'a:link, a:visited {color: inherit !important; text-decoration: none; font-weight: 500}')
 
-async def call_agent(input):
+async def call_agent(input, spinner):
     text = input.value
     input.value = ""
+    
+    spinner.visible = True
     
     add_message('user', text)
     result = await agent.call_agent(text)
     add_message('agent', result)
+    
+    spinner.visible = False
 
 def add_message(user_id: str, text: str) -> None:
     stamp = datetime.now().strftime('%X')
@@ -52,12 +56,14 @@ async def main():
     
     with ui.column().classes('w-full max-w-2x1 mx-auto items-stretch'):
         chat_messages("user")
+        spinner = ui.spinner('dots', size='lg', color=accent_color).classes('self-center')
+        spinner.visible = False
         
-    with ui.footer().classes('w-full max-w-4xl mx-auto my-6'), ui.column().classes('w-full'):
+    with ui.footer().classes('w-full max-w-4xl mx-auto py-6'), ui.column().classes('w-full'):
         with ui.row().classes('w-full no-wrap items-center'):
             with ui.avatar():
                 ui.image('https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=user')
-            input = ui.input(placeholder='Type something ...').on('keydown.enter', lambda: call_agent(input)).props('rounded outlined input-class=mx-3 bg-color=accent').classes('flex-grow')
+            input = ui.input(placeholder='Type something ...').on('keydown.enter', lambda: call_agent(input, spinner)).props('rounded outlined input-class=mx-3 bg-color=accent').classes('flex-grow')
     
     await ui.context.client.connected()
     
