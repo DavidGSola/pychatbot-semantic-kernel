@@ -16,6 +16,9 @@ accent_color = '#9EC8B9'
 
 def init_styles():
     ui.colors(primary=bg_color, secondary=secondary_color, accent=accent_color)
+    
+    ui.page_title('Simple SK Chatbot')
+    
     ui.query('.nicegui-content').classes('p-8')
     ui.query('body').style('background-color: #040D12')
     ui.query('#app').style(f'background-color: {bg_color}').classes('max-w-4xl mx-auto')
@@ -78,4 +81,4 @@ if __name__ in {"__main__", "__mp_main__"}:
         Set here your system prompt
     """)
 
-    ui.run()
+    ui.run(favicon='🐍')
