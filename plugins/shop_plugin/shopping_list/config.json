@@ -1,6 +1,6 @@
 {
     "schema": 1,
-    "description": "Create a shopping list for the user needs.",
+    "description": "Create a shopping list for a receipt based on the available supermarkets",
     "execution_settings": {
         "default": {
             "max_tokens": 200,
@@ -12,13 +12,13 @@
     },
     "input_variables": [
         {
-            "name": "user_needs",
-            "description": "The user's needs.",
+            "name": "receipt",
+            "description": "Receipt",
             "default": ""
         },
         {
-            "name": "supermarket",
-            "description": "Name of the supermarket",
+            "name": "supermarkets",
+            "description": "Supermarkets and categories",
             "default": ""
         }
     ]
