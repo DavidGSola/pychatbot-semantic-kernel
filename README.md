@@ -1,4 +1,4 @@
-# PyChatbot for Semantic Kernel
+# 🐍 PyChatbot for Semantic Kernel
 
 **PyChatbot for Semantic Kernel** is a sample chatbot integrated with [Semantic Kernel plugins](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-python). You can easily build your own plugins on top of the chatbot, so you can quickly validate your use case. It also allows you to check in real time how the agent [plan](https://learn.microsoft.com/en-us/semantic-kernel/concepts/planning?pivots=programming-language-python) and executes the tasks based on the available plugins.
 
