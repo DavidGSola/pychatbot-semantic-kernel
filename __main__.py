@@ -33,7 +33,7 @@ async def call_agent(input, chat_spinner, plan_spinner):
     
     add_message('user', text)
     result = await agent.call_agent(text)
-    add_message('agent', result)
+    add_message('assistant', result)
     
     chat_spinner.visible = plan_spinner.visible = False
 
@@ -44,6 +44,13 @@ def add_message(user_id: str, text: str) -> None:
     user = users.find(user_id)
     messages.append((user, text, stamp))
     chat_messages.refresh()
+    
+def reset_conversation() -> None:
+    messages.clear()
+    agent.reset()
+    
+    chat_messages.refresh()
+    chat_plan.refresh()
 
 @ui.refreshable
 def chat_messages(user_id: str) -> None:
@@ -88,6 +95,7 @@ async def main():
             with ui.avatar():
                 ui.image('https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=user')
             input = ui.input(placeholder='Type something ...').on('keydown.enter', lambda: call_agent(input, chat_spinner, plan_spinner)).props('rounded outlined input-class=mx-3 bg-color=accent').classes('flex-grow')
+            ui.button('Reset', on_click=lambda: reset_conversation()).props('color=accent text-color=primary')
 
     await ui.context.client.connected()
     
@@ -95,7 +103,7 @@ if __name__ in {"__main__", "__mp_main__"}:
     load_dotenv()
 
     users.add('user')
-    users.add('agent')
+    users.add('assistant')
 
     agent.define_agent(
     """

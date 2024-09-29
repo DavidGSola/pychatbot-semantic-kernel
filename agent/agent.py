@@ -60,3 +60,6 @@ class Agent:
                     call_chain.append(ToolInteraction(role, item.plugin_name, item.function_name))
 
         return call_chain
+
+    def reset(self) -> None:
+        del self.history.messages[1:]
