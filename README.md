@@ -1,17 +1,15 @@
-# Python Chatbot with Semantic Kernel Plugins
+# PyChatbot for Semantic Kernel
 
-Welcome to the Python Chatbot for Semantic Kernel project! This repository contains a ready-to-use chatbot template integrated with sample Semantic Kernel plugins. The project includes a standar chat interface together with a Semantic Kernel planner viewer, where you can inspect in real time how the function calling has create the plan, and the tools used to respond the user.
+**PyChatbot for Semantic Kernel** is a sample chatbot integrated with [Semantic Kernel plugins](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-python). You can easily build your own plugins on top of the chatbot, so you can quickly validate your use case. It also allows you to check in real time how the agent [plan](https://learn.microsoft.com/en-us/semantic-kernel/concepts/planning?pivots=programming-language-python) and executes the tasks based on the available plugins.
 
 ## Features
 
-- **Chat interface:** A simple user-friendly chat interface for interacting with the chatbot.
+- **Chat interface:** A simple, easy-to-use chat interface for interacting with the chatbot.
+- **Plan execution inspector:** See in real time how the Semantic Kernel interacts with your plugins.
 
-![Chat interface](./images/chat.png)
-
-- **Semantic Kernel Plugins:** Pre-integrated with Semantic Kernel, with some sample plugins to showcase how to enhanhce the chatbot's capabilities.
-- **Plan execution inspector:** Inspect in real time how Semantic Kernel interacts with your Plugins.
-
-![Plan inspector](./images/planner.png)
+<p align="center">
+  <img width="600" height="557" src="./images/chat.gif">
+</p>
 
 ## Getting Started
 
@@ -44,28 +42,28 @@ py -m pip install -r requirements.txt
 
 ## Usage
 
-Python Chatbot for Semantic Kernel contains a set of basic plugins to showcase it. However, it is straightforward to customize it for your own use case.
+**PyChatbot for Semantic Kernel** comes with a set of basic plugins to showcase it. It is easy to customise it for your own use case by defining your own [Persona](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/personas?pivots=programming-language-python) and [Plugins](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-python).
 
 ### Configure Semantic Kernel: 
 
-Rename `.env.sample` file to `.env` and add your connection details.
+Rename `.env.sample` file to `.env` and add your Azure OpenAI or OpenAI connection details.
 
-### Edit the system prompt:
+### Edit the meta prompt:
 
-Customize your chatbot by editing the [persona](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/personas?pivots=programming-language-python) in the `__main__.py` file.
+Customize your chatbot by editing the [Persona](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/personas?pivots=programming-language-python) in the `__main__.py` file.
 
 ```py
 agent.define_agent(
 """
-    Set here your own system prompt.
+    Set here the meta prompt.
 """)
 ```
 
-### Create your own Plugins:
+### Create your Plugins:
 
-Define your own [Plugins](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-python) for your use case within the `plugins` folder.
+Create new [Plugins](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-python) for your use case within the `plugins` folder.
 
-Edit the `__init__` method within the `Agent` class to register your new Plugins.
+Edit the `__init__` method within the `Agent` class to register the new plugins.
 
 ```py
 # Native plugin
