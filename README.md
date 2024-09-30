@@ -23,8 +23,8 @@
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/DavidGSola/sk-sample-chatbot.git
-cd sk-sample-chatbot
+git clone https://github.com/DavidGSola/pychatbot-semantic-kernel.git
+cd pychatbot-semantic-kernel
 ```
 
 2. Create new virtual environment:
