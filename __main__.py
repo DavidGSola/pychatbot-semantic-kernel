@@ -52,6 +52,24 @@ def reset_conversation() -> None:
     chat_messages.refresh()
     chat_plan.refresh()
 
+    ui.notify('Conversation cleared')
+
+def show_about() -> None:
+    libraries = []
+    with open('requirements.txt', 'r', encoding='utf-16') as requirements:
+        for line in requirements.readlines():
+            if '==' in line:
+                lib, version = line.strip().split('==')
+                libraries.append(f"{lib}: {version}")
+
+    with ui.dialog() as about_dialog, ui.card():
+        ui.label('🐍 PyChatbot for Semantic Kernel').classes('text-semibold text-xl')
+        ui.label('\n'.join(libraries)).style('white-space: pre-wrap')
+
+        ui.button('Close', on_click=about_dialog.close)
+
+    about_dialog.open()
+
 @ui.refreshable
 def chat_messages(user_id: str) -> None:
     if messages:
@@ -75,6 +93,13 @@ def chat_plan() -> None:
 async def main():
     init_styles()
     
+    with ui.page_sticky(x_offset=18, y_offset=18).props('position=top-right'):
+        with ui.element('q-fab').props(f'icon=settings color=secondary direction=down').classes('self-end'):
+            ui.element('q-fab-action').props('icon=restore color=secondary') \
+                .on('click', lambda: reset_conversation()).tooltip('Clear conversation')
+            ui.element('q-fab-action').props('icon=help color=secondary') \
+                .on('click', lambda: show_about()).tooltip('About')
+
     with ui.tabs().classes('w-full text-emerald-300') as tabs:
         chat = ui.tab('Chat')
         plan = ui.tab('Kernel plan')
@@ -95,7 +120,6 @@ async def main():
             with ui.avatar():
                 ui.image('https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=user')
             input = ui.input(placeholder='Type something ...').on('keydown.enter', lambda: call_agent(input, chat_spinner, plan_spinner)).props('rounded outlined input-class=mx-3 bg-color=accent').classes('flex-grow')
-            ui.button('Reset', on_click=lambda: reset_conversation()).props('color=accent text-color=primary')
 
     await ui.context.client.connected()
     
