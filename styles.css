@@ -1,0 +1,31 @@
+body {
+    overflow: hidden;
+}
+       
+.tab-content {  
+    overflow-y: scroll;
+    max-height: calc(100vh - 200px);
+}
+           
+.tab-content::-webkit-scrollbar {
+    width: 20px;
+}      
+
+.tab-content::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+    background-color: #d6dee1;
+    border-radius: 20px;
+    border: 6px solid transparent;
+    background-clip: content-box;
+}
+
+.tab-content::-webkit-scrollbar-thumb:hover {
+    background-color: #a8bbbf;
+}
+       
+a:link, a:visited {
+    color: inherit !important; text-decoration: none; font-weight: 500
+}

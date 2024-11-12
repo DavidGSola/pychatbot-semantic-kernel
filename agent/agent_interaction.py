@@ -11,8 +11,11 @@ class ToolInteraction(AgentInteraction):
         self.plugin_name = plugin_name
         self.function_name = function_name
 
-    def color(self) -> str:
-        return '#5AA9E6'
+    def bg_color(self) -> str:
+        return '#bf5050'
+    
+    def text_color(self) -> str:
+        return '#ffffff'
             
     def title(self) -> str:
         return 'ASSISTANT - TOOL'
@@ -27,16 +30,23 @@ class TextInteraction(AgentInteraction):
         self.role = role
         self.text = text
 
-    def color(self) -> str:
+    def bg_color(self) -> str:
         match str(self.role):
             case 'AuthorRole.SYSTEM':
-                return '#4B8F8C'
+                return '#902b2d'
+            case 'AuthorRole.ASSISTANT':
+                return '#d99a9a'
             case 'AuthorRole.USER':
                 return '#A0D6B4'
-            case 'AuthorRole.ASSISTANT':
-                return '#82B8E6'
             case _:
                 return '#ffffff'
+
+    def text_color(self) -> str:
+        match str(self.role):
+            case 'AuthorRole.SYSTEM':
+                return '#ffffff'
+            case _:
+                return '#000000'
 
     def title(self) -> str:
         parts = self.role.split('.')
