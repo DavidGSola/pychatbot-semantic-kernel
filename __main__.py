@@ -10,6 +10,7 @@ from nicegui import ui
 
 agent:Agent = Agent()
 messages: List[Tuple[users.User, str, str]] = []
+spinners = []
 
 bg_color = '#1B4242'
 secondary_color = '#d99a9a'
@@ -27,7 +28,7 @@ def init_styles():
     with open('styles.css', 'r', encoding='utf-8') as styles:
         ui.add_css(styles.read())
 
-async def call_agent(input, spinners):
+async def call_agent(input):
     text = input.value
     input.value = ""
     
@@ -86,31 +87,11 @@ def chat_messages(user_id: str) -> None:
 @ui.refreshable
 def chat_plan() -> None:
     with ui.column():
-        for record in agent.agent_history():
-            with ui.card().style(f'background-color: {record.bg_color()}'):
-                ui.label(record.title()).classes('font-bold').style(f'color: {record.text_color()}')
-                ui.label(record.content()).style(f'color: {record.text_color()}')
+        [record.render() for record in agent.records()]
 
     move_to_last_message()
 
-def footer(spinners):
-    with ui.footer().classes('w-full max-w-4xl mx-auto py-6'), ui.column().classes('w-full'):
-        with ui.row().classes('w-full no-wrap items-center'):
-            with ui.avatar():
-                ui.image('https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=user')
-            input = ui.input(placeholder='Type something ...').on('keydown.enter', lambda: call_agent(input, spinners)).props('rounded outlined input-class=mx-3 bg-color=accent').classes('flex-grow')
-
-@ui.page('/')
-async def main():
-    init_styles()
-
-    with ui.page_sticky(x_offset=18, y_offset=18).props('position=top-right'):
-        with ui.element('q-fab').props(f'icon=settings color=secondary direction=down').classes('self-end'):
-            ui.element('q-fab-action').props('icon=restore color=secondary') \
-                .on('click', lambda: reset_conversation()).tooltip('Clear conversation')
-            ui.element('q-fab-action').props('icon=help color=secondary') \
-                .on('click', lambda: show_about()).tooltip('About')
-
+def tabs():
     with ui.tabs().classes('w-full text-emerald-300') as tabs:
         chat = ui.tab('Chat')
         plan = ui.tab('Kernel plan')
@@ -118,15 +99,39 @@ async def main():
         with ui.tab_panel(chat).classes('tab-content').style(f'background-color: {bg_color}'):
             with ui.column().classes('w-full max-w-2x1 mx-auto items-stretch'):
                 chat_messages("user")
-                chat_spinner = ui.spinner('dots', size='lg', color=accent_color).classes('self-center')
-                chat_spinner.visible = False
+                spinner()
         with ui.tab_panel(plan).classes('tab-content').style(f'background-color: {bg_color}'):
             with ui.column().classes('w-full max-w-2x1 mx-auto items-stretch'):
                 chat_plan()
-                plan_spinner = ui.spinner('dots', size='lg', color=accent_color).classes('self-center')
-                plan_spinner.visible = False
+                spinner()
+
+def footer():
+    with ui.footer().classes('w-full max-w-4xl mx-auto py-6'), ui.column().classes('w-full'):
+        with ui.row().classes('w-full no-wrap items-center'):
+            with ui.avatar():
+                ui.image('https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=user')
+            input = ui.input(placeholder='Type something ...').on('keydown.enter', lambda: call_agent(input)).props('rounded outlined input-class=mx-3 bg-color=accent').classes('flex-grow')
+
+def spinner():
+    chat_spinner = ui.spinner('dots', size='lg', color=accent_color).classes('self-center')
+    chat_spinner.visible = False
+    spinners.append(chat_spinner)
+
+def settings():
+    with ui.page_sticky(x_offset=18, y_offset=18).props('position=top-right'):
+        with ui.element('q-fab').props(f'icon=settings color=secondary direction=down').classes('self-end'):
+            ui.element('q-fab-action').props('icon=restore color=secondary') \
+                .on('click', lambda: reset_conversation()).tooltip('Clear conversation')
+            ui.element('q-fab-action').props('icon=help color=secondary') \
+                .on('click', lambda: show_about()).tooltip('About')
+                
+@ui.page('/')
+async def main():
+    init_styles()
     
-    footer([chat_spinner, plan_spinner])
+    tabs()
+    footer()
+    settings()
 
     await ui.context.client.connected()
     

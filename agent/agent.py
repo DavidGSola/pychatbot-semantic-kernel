@@ -1,5 +1,5 @@
 from plugins.supermarket import SupermarketPlugin
-from agent.agent_interaction import AgentInteraction, ToolInteraction, TextInteraction
+from agent.agent_record import AgentRecord, AgentToolRecord, AgentTextRecord
 
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
@@ -13,6 +13,7 @@ from semantic_kernel.functions.kernel_arguments import KernelArguments
 
 from semantic_kernel.contents.text_content import TextContent
 from semantic_kernel.contents.function_call_content import FunctionCallContent
+from semantic_kernel.contents.function_result_content import FunctionResultContent
 
 class Agent:
     def __init__(self):
@@ -48,18 +49,20 @@ class Agent:
         
         return str(result)
     
-    def agent_history(self) -> list[AgentInteraction]:
-        call_chain = []
+    def records(self) -> list[AgentRecord]:
+        records = []
 
         for message in self.history.messages:
             role = message.role
             for item in message.items:
                 if isinstance(item, TextContent):
-                    call_chain.append(TextInteraction(role, item.text))
+                    records.append(AgentTextRecord(role, item.text))
                 elif isinstance(item, FunctionCallContent):
-                    call_chain.append(ToolInteraction(role, item.plugin_name, item.function_name))
+                    records.append(AgentToolRecord(role, item.plugin_name, item.function_name, item.arguments))
+                elif isinstance(item, FunctionResultContent) and isinstance(records[-1], AgentToolRecord):
+                    records[-1].add_result(item.result)
 
-        return call_chain
+        return records
 
     def reset(self) -> None:
         del self.history.messages[1:]
