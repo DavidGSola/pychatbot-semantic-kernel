@@ -84,9 +84,9 @@ def chat_messages(user_id: str) -> None:
 def chat_plan() -> None:
     with ui.column():
         for call in agent.agent_history():
-            with ui.card().props('bg-color=accent'):
-                ui.label(call.title()).classes('font-bold text-emerald-900')
-                ui.label(call.content()).classes('text-emerald-600')
+            with ui.card().style(f'background-color: {call.color()}'):
+                ui.label(call.title()).classes('font-bold text-gray-800')
+                ui.label(call.content()).classes('text-gray-900')
     ui.run_javascript('window.scrollTo(0, document.body.scrollHeight)')
 
 @ui.page('/')
