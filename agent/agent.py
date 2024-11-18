@@ -2,13 +2,13 @@ from plugins.supermarket import SupermarketPlugin
 from agent.agent_record import AgentRecord, AgentToolRecord, AgentTextRecord
 
 from semantic_kernel import Kernel
-from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
+from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion, AzureAudioToText
 from semantic_kernel.connectors.ai.function_choice_behavior import FunctionChoiceBehavior
 from semantic_kernel.connectors.ai.chat_completion_client_base import ChatCompletionClientBase
 from semantic_kernel.connectors.ai.open_ai.prompt_execution_settings.azure_chat_prompt_execution_settings import (
     AzureChatPromptExecutionSettings
 )
-from semantic_kernel.contents.chat_history import ChatHistory
+from semantic_kernel.contents import AudioContent, ChatHistory
 from semantic_kernel.functions.kernel_arguments import KernelArguments
 
 from semantic_kernel.contents.text_content import TextContent
@@ -22,8 +22,13 @@ class Agent:
             service_id="default"
         ))
         
-        self.chat : AzureChatCompletion = self.kernel.get_service(type=ChatCompletionClientBase)
+        self.kernel.add_service(AzureAudioToText(
+            service_id="audio_service"
+        ))
         
+        self.chat_service:AzureChatCompletion = self.kernel.get_service(type=ChatCompletionClientBase)
+        self.audio_to_text_service:AzureAudioToText = self.kernel.get_service(type=AzureAudioToText)
+
         self.kernel.add_plugin(SupermarketPlugin(), plugin_name="SupermarketPlugin")
         self.kernel.add_plugin(parent_directory="./plugins", plugin_name="shop_plugin")
 
@@ -38,7 +43,7 @@ class Agent:
     async def call_agent(self, user_message: str) -> (str):
         self.history.add_user_message(user_message)
         
-        result = (await self.chat.get_chat_message_contents(
+        result = (await self.chat_service.get_chat_message_contents(
             chat_history=self.history,
             settings=self.execute_settings,
             kernel=self.kernel,
@@ -48,6 +53,10 @@ class Agent:
         self.history.add_message(result)
         
         return str(result)
+    
+    async def transcript_audio(self, audio_file: str) -> (str):
+        user_message = await self.audio_to_text_service.get_text_content(AudioContent.from_audio_file(audio_file))
+        return user_message.text
     
     def records(self) -> list[AgentRecord]:
         records = []

@@ -1,4 +1,4 @@
-Create a shopping list with the ingredients needed for the receipt {{$receipt}}.
+Create a shopping list with the ingredients needed for the recipe {{$recipe}}.
 
 Group the items based on the supermarket where they can be found. This is the list of supermarkets with the corresponding category:
 {{$supermarkets}}

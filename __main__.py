@@ -6,9 +6,11 @@ from dotenv import load_dotenv
 from datetime import datetime
 from typing import List, Tuple
 from agent.agent import Agent
+from audio.audio_recorder import AudioRecorder
 from nicegui import ui
 
 agent:Agent = Agent()
+recorder:AudioRecorder = AudioRecorder()
 messages: List[Tuple[users.User, str, str]] = []
 spinners = []
 
@@ -28,10 +30,13 @@ def init_styles():
     with open('styles.css', 'r', encoding='utf-8') as styles:
         ui.add_css(styles.read())
 
-async def call_agent(input):
+async def call_agent_from_input(input):
     text = input.value
     input.value = ""
-    
+
+    await call_agent(text)
+
+async def call_agent(text: str):    
     swap_visibility(spinners)    
     
     add_message('user', text)
@@ -105,12 +110,27 @@ def tabs():
                 chat_plan()
                 spinner()
 
+def start_recording(button: ui.button):
+    button.text = "Recording"
+    recorder.start_recording()
+
+async def stop_recording(button: ui.button):
+    button.text = ""
+    recorder.stop_recording()
+    transcription = await agent.transcript_audio(recorder.output_filepath)
+    await call_agent(transcription)
+
+    recorder.remove_output_file()
+
 def footer():
     with ui.footer().classes('w-full max-w-4xl mx-auto py-6'), ui.column().classes('w-full'):
         with ui.row().classes('w-full no-wrap items-center'):
             with ui.avatar():
                 ui.image('https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=user')
-            input = ui.input(placeholder='Type something ...').on('keydown.enter', lambda: call_agent(input)).props('rounded outlined input-class=mx-3 bg-color=accent').classes('flex-grow')
+            input = ui.input(placeholder='Type something ...').on('keydown.enter', lambda: call_agent_from_input(input)).props('rounded outlined input-class=mx-3 bg-color=accent').classes('flex-grow')
+            button = ui.button().props('icon=mic color=accent text-color=primary').classes('rounded-full')
+            button.on('mousedown', lambda: start_recording(button))
+            button.on('mouseup', lambda: stop_recording(button))
 
 def spinner():
     chat_spinner = ui.spinner('dots', size='lg', color=accent_color).classes('self-center')
@@ -143,7 +163,7 @@ if __name__ in {"__main__", "__mp_main__"}:
 
     agent.define_agent(
     """
-        You are a shopping assistant embedded in a chat. You can help the user with receipts and cooking related stuff.
+        You are a shopping assistant embedded in a chat. You can help the user with recipes and cooking related stuff.
     """)
 
     ui.run(favicon='🐍')

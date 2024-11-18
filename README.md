@@ -4,7 +4,7 @@
 
 ## Features
 
-- **Chat interface:** A simple, easy-to-use chat interface for interacting with the chatbot.
+- **Chat interface:** A simple, easy-to-use chat interface for interacting with the chatbot. It supports talking to the agent by using Semantic Kernel audio to text services.
 - **Plan execution inspector:** See in real time how the Semantic Kernel interacts with your plugins.
 
 <p align="center">
