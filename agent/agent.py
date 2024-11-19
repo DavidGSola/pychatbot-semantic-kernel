@@ -1,5 +1,5 @@
 from plugins.supermarket import SupermarketPlugin
-from agent.agent_record import AgentRecord, AgentToolRecord, AgentTextRecord
+from agent.agent_record import AgentRecord, AgentToolRecord, AgentTextRecord, UsageRecord
 
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion, AzureAudioToText
@@ -11,6 +11,7 @@ from semantic_kernel.connectors.ai.open_ai.prompt_execution_settings.azure_chat_
 from semantic_kernel.contents import AudioContent, ChatHistory
 from semantic_kernel.functions.kernel_arguments import KernelArguments
 
+from semantic_kernel.contents.chat_message_content import ChatMessageContent
 from semantic_kernel.contents.text_content import TextContent
 from semantic_kernel.contents.function_call_content import FunctionCallContent
 from semantic_kernel.contents.function_result_content import FunctionResultContent
@@ -63,15 +64,23 @@ class Agent:
 
         for message in self.history.messages:
             role = message.role
+            usage = self.__get_usage(message)
+            
             for item in message.items:
                 if isinstance(item, TextContent):
-                    records.append(AgentTextRecord(role, item.text))
+                    records.append(AgentTextRecord(role, item.text, usage))
                 elif isinstance(item, FunctionCallContent):
-                    records.append(AgentToolRecord(role, item.plugin_name, item.function_name, item.arguments))
+                    records.append(AgentToolRecord(role, item.plugin_name, item.function_name, item.arguments, usage))
                 elif isinstance(item, FunctionResultContent) and isinstance(records[-1], AgentToolRecord):
                     records[-1].add_result(item.result)
 
         return records
 
+    def __get_usage(self, message: ChatMessageContent) -> UsageRecord:
+        if 'usage' in message.metadata:
+            return UsageRecord(message.metadata['usage'].prompt_tokens, message.metadata['usage'].completion_tokens)
+        else:
+            return None
+            
     def reset(self) -> None:
         del self.history.messages[1:]

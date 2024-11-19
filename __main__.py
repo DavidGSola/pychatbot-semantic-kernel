@@ -45,7 +45,7 @@ async def call_agent(text: str):
     
     swap_visibility(spinners)
 
-    chat_plan.refresh()
+    chat_inspector.refresh()
 
 def add_message(user_id: str, text: str) -> None:
     stamp = datetime.now().strftime('%X')
@@ -58,7 +58,7 @@ def reset_conversation() -> None:
     agent.reset()
     
     chat_messages.refresh()
-    chat_plan.refresh()
+    chat_inspector.refresh()
 
     ui.notify('Conversation cleared')
 
@@ -90,7 +90,7 @@ def chat_messages(user_id: str) -> None:
     move_to_last_message()
     
 @ui.refreshable
-def chat_plan() -> None:
+def chat_inspector() -> None:
     with ui.column():
         [record.render() for record in agent.records()]
 
@@ -99,15 +99,15 @@ def chat_plan() -> None:
 def tabs():
     with ui.tabs().classes('w-full text-emerald-300') as tabs:
         chat = ui.tab('Chat')
-        plan = ui.tab('Kernel plan')
+        inspector = ui.tab('Inspector')
     with ui.tab_panels(tabs, value=chat).classes('w-full'):
         with ui.tab_panel(chat).classes('tab-content').style(f'background-color: {bg_color}'):
             with ui.column().classes('w-full max-w-2x1 mx-auto items-stretch'):
                 chat_messages("user")
                 spinner()
-        with ui.tab_panel(plan).classes('tab-content').style(f'background-color: {bg_color}'):
+        with ui.tab_panel(inspector).classes('tab-content').style(f'background-color: {bg_color}'):
             with ui.column().classes('w-full max-w-2x1 mx-auto items-stretch'):
-                chat_plan()
+                chat_inspector()
                 spinner()
 
 def start_recording(button: ui.button):
