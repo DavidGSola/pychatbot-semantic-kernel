@@ -2,6 +2,8 @@
 
 **PyChatbot for Semantic Kernel** is a sample chatbot integrated with [Semantic Kernel plugins](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-python). You can easily build your own plugins on top of the chatbot, so you can quickly validate your use case. It also allows you to check in real time how the agent [plans](https://learn.microsoft.com/en-us/semantic-kernel/concepts/planning?pivots=programming-language-python) and executes the tasks based on the available plugins.
 
+This chatbot uses the new experimental [Agent Framework](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/?pivots=programming-language-python) which is still in development and is subject to change.
+
 <p align="center">
   <img width="600" src="./images/chat.gif">
 </p>
@@ -49,28 +51,33 @@ py -m pip install -r requirements.txt
 
 ## Usage
 
-**PyChatbot for Semantic Kernel** comes with a set of basic plugins to showcase it. It is easy to customize for your own use case by defining your own [Persona](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/personas?pivots=programming-language-python) and [Plugins](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-python).
+**PyChatbot for Semantic Kernel** comes with a set of basic plugins to showcase it. It is easy to customize for your own use case by defining the instructions for the [Agent](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/chat-completion-agent?pivots=programming-language-python) and new [Plugins](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-python).
 
 ### Configure Semantic Kernel: 
 
 Rename `.env.sample` file to `.env` and add your Azure OpenAI or OpenAI connection details.
 
-### Edit the meta prompt:
+### Set the instructions:
 
-Customize your chatbot by editing the [Persona](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/personas?pivots=programming-language-python) in the `__main__.py` file.
+Customize your chatbot by editing the instructions for the [Agent](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/chat-completion-agent?pivots=programming-language-python) in the `coffee_assistant.py` file.
 
-```py
-agent.define_agent(
-"""
-    Set here the meta prompt.
-""")
+```python
+self.agent = ChatCompletionAgent(
+    service_id='chat_completion',
+    kernel=self.kernel,
+    name='Assistant',
+    instructions="""
+        Set here the meta prompt.
+    """,
+    execution_settings=settings
+)
 ```
 
 ### Create your Plugins:
 
 Create new [Plugins](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-python) for your use case within the `plugins` folder.
 
-Edit the `__init__` method within the `Agent` class to register the new plugins.
+Edit the `__init__` method within the `CoffeeAsistant` class to register the new plugins.
 
 ```py
 # Native plugin

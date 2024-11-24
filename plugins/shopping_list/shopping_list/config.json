@@ -1,6 +1,6 @@
 {
     "schema": 1,
-    "description": "Create a shopping list for a recipe based on the available supermarkets",
+    "description": "Provide a list of shops that might be useful for a user task",
     "execution_settings": {
         "default": {
             "max_tokens": 200,
@@ -12,13 +12,13 @@
     },
     "input_variables": [
         {
-            "name": "recipe",
-            "description": "Recipe",
+            "name": "user_task",
+            "description": "User task",
             "default": ""
         },
         {
-            "name": "supermarkets",
-            "description": "Supermarkets and categories",
+            "name": "shops_and_categories",
+            "description": "List of shop names with its categories",
             "default": ""
         }
     ]

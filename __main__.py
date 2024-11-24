@@ -5,11 +5,11 @@ import markdown2
 from dotenv import load_dotenv
 from datetime import datetime
 from typing import List, Tuple
-from agent.agent import Agent
+from agent.coffee_assistant import CoffeeAssistant
 from audio.audio_recorder import AudioRecorder
 from nicegui import ui
 
-agent:Agent = Agent()
+assistant:CoffeeAssistant = CoffeeAssistant()
 recorder:AudioRecorder = AudioRecorder()
 messages: List[Tuple[users.User, str, str]] = []
 spinners = []
@@ -30,17 +30,17 @@ def init_styles():
     with open('styles.css', 'r', encoding='utf-8') as styles:
         ui.add_css(styles.read())
 
-async def call_agent_from_input(input):
+async def call_assistant_from_input(input):
     text = input.value
     input.value = ""
 
-    await call_agent(text)
+    await call_assistant(text)
 
-async def call_agent(text: str):    
+async def call_assistant(text: str):    
     swap_visibility(spinners)    
     
     add_message('user', text)
-    result = await agent.call_agent(text)
+    result = await assistant.call(text)
     add_message('assistant', result)
     
     swap_visibility(spinners)
@@ -55,7 +55,7 @@ def add_message(user_id: str, text: str) -> None:
     
 def reset_conversation() -> None:
     messages.clear()
-    agent.reset()
+    assistant.reset()
     
     chat_messages.refresh()
     chat_inspector.refresh()
@@ -92,7 +92,7 @@ def chat_messages(user_id: str) -> None:
 @ui.refreshable
 def chat_inspector() -> None:
     with ui.column():
-        [record.render() for record in agent.records()]
+        [record.render() for record in assistant.records()]
 
     move_to_last_message()
 
@@ -117,8 +117,8 @@ def start_recording(button: ui.button):
 async def stop_recording(button: ui.button):
     button.text = ""
     recorder.stop_recording()
-    transcription = await agent.transcript_audio(recorder.output_filepath)
-    await call_agent(transcription)
+    transcription = await assistant.transcript_audio(recorder.output_filepath)
+    await call_assistant(transcription)
 
     recorder.remove_output_file()
 
@@ -127,7 +127,7 @@ def footer():
         with ui.row().classes('w-full no-wrap items-center'):
             with ui.avatar():
                 ui.image('https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=user')
-            input = ui.input(placeholder='Type something ...').on('keydown.enter', lambda: call_agent_from_input(input)).props('rounded outlined input-class=mx-3 bg-color=accent').classes('flex-grow')
+            input = ui.input(placeholder='Type something ...').on('keydown.enter', lambda: call_assistant_from_input(input)).props('rounded outlined input-class=mx-3 bg-color=accent').classes('flex-grow')
             button = ui.button().props('icon=mic color=accent text-color=primary').classes('rounded-full')
             button.on('mousedown', lambda: start_recording(button))
             button.on('mouseup', lambda: stop_recording(button))
@@ -160,10 +160,5 @@ if __name__ in {"__main__", "__mp_main__"}:
 
     users.add('user')
     users.add('assistant')
-
-    agent.define_agent(
-    """
-        You are a shopping assistant embedded in a chat. You can help the user with recipes and cooking related stuff.
-    """)
 
     ui.run(favicon='🐍')

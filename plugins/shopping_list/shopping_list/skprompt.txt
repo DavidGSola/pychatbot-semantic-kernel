@@ -1,0 +1,5 @@
+Create a shopping list based on the following list of shops with categories {{$shops_and_categories}} so the user have everything needed to accomplish the following task {{$user_task}}.
+
+Group the items to be bought based on the shop where they can be found.
+
+Use markdown to style it. Use bullet points for the shopping list. Use bold for the shop name.

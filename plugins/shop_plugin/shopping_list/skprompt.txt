@@ -1,6 +1,0 @@
-Create a shopping list with the ingredients needed for the recipe {{$recipe}}.
-
-Group the items based on the supermarket where they can be found. This is the list of supermarkets with the corresponding category:
-{{$supermarkets}}
-
-Use markdown to style it. Use bullet points for the shopping list. Use bold for the supermaket names.
