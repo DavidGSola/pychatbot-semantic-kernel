@@ -1,4 +1,4 @@
-from plugins.ShopFinderPlugin import ShopFinderPlugin
+from plugins.shop_finder_plugin import ShopFinderPlugin
 from agent.agent_record import AgentRecord, AgentToolRecord, AgentTextRecord, UsageRecord
 
 from semantic_kernel import Kernel
