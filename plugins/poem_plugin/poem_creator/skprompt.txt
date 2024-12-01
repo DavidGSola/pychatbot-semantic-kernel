@@ -1,0 +1,4 @@
+Rewrite as a poem the first sentence of a book <sentence>{{$book_first_sentence}}</sentence> following these restrictions:
+
+- Response must be always in English.
+- The poem must always have one stanza.

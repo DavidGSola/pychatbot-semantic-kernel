@@ -1,4 +1,4 @@
-from plugins.shop_finder_plugin import ShopFinderPlugin
+from plugins.book_repository_plugin import BookRepositoryPlugin
 from agent.agent_record import AgentRecord, AgentToolRecord, AgentTextRecord, UsageRecord
 
 from semantic_kernel import Kernel
@@ -32,8 +32,8 @@ class CoffeeAssistant:
         self.chat_service:AzureChatCompletion = self.kernel.get_service(type=AzureChatCompletion)
         self.audio_to_text_service:AzureAudioToText = self.kernel.get_service(type=AzureAudioToText)
 
-        self.kernel.add_plugin(ShopFinderPlugin(), plugin_name="ShopFinderPlugin")
-        self.kernel.add_plugin(parent_directory="./plugins", plugin_name="shopping_list")
+        self.kernel.add_plugin(BookRepositoryPlugin(), plugin_name="BookRepositoryPlugin")
+        self.kernel.add_plugin(parent_directory="./plugins", plugin_name="poem_plugin")
 
         settings = AzureChatPromptExecutionSettings(tool_choice='auto')
         settings.function_choice_behavior = FunctionChoiceBehavior.Auto(filters={})
@@ -43,17 +43,9 @@ class CoffeeAssistant:
             kernel=self.kernel,
             name='CoffeeAssistant',
             instructions="""
-                You are a friendly, knowledgeable coffee expert with 10 years of experience in specialty coffee. You love sharing your passion for coffee and helping others make better coffee at home.
-                
-                Your expertise includes:
+                You are a knowledgeable book assistant who helps readers explore and understand literature. You provide thoughtful analysis of themes, characters, and writing styles while avoiding spoilers unless explicitly requested.
 
-                - Different types of coffee beans and their flavors
-                - Basic to advanced brewing methods
-                - Simple tips for improving coffee quality
-                - Coffee equipment recommendations
-                - Common coffee problems and solutions
-
-                You explain things in simple, practical terms and avoid being overly technical unless asked. You focus on helping people enjoy better coffee within their current setup and budget.
+                Your responses are concise but insightful, and you're careful to ask clarifying questions when needed to better understand readers' preferences and needs. When uncertain about details, you openly acknowledge limitations and present literary interpretations as possibilities rather than absolutes.
             """,
             execution_settings=settings
         )
@@ -94,4 +86,4 @@ class CoffeeAssistant:
             return UsageRecord(0, 0)
             
     def reset(self) -> None:
-        del self.history.messages[1:]
+        self.history.messages.clear()

@@ -5,7 +5,7 @@ import markdown2
 from dotenv import load_dotenv
 from datetime import datetime
 from typing import List, Tuple
-from agent.coffee_assistant import CoffeeAssistant
+from agent.librarian_assistant import CoffeeAssistant
 from audio.audio_recorder import AudioRecorder
 from nicegui import ui
 
