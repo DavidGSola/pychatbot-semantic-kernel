@@ -5,11 +5,11 @@ import markdown2
 from dotenv import load_dotenv
 from datetime import datetime
 from typing import List, Tuple
-from agent.librarian_assistant import CoffeeAssistant
+from agent.librarian_assistant import LibrarianAssistant
 from audio.audio_recorder import AudioRecorder
 from nicegui import ui
 
-assistant:CoffeeAssistant = CoffeeAssistant()
+assistant:LibrarianAssistant = LibrarianAssistant()
 recorder:AudioRecorder = AudioRecorder()
 messages: List[Tuple[users.User, str, str]] = []
 spinners = []

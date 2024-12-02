@@ -18,7 +18,7 @@ from semantic_kernel.contents.function_call_content import FunctionCallContent
 from semantic_kernel.contents.function_result_content import FunctionResultContent
 from semantic_kernel.contents.utils.author_role import AuthorRole
 
-class CoffeeAssistant:
+class LibrarianAssistant:
     def __init__(self):
         self.kernel = Kernel()
         self.kernel.add_service(AzureChatCompletion(
