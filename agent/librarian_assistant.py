@@ -65,7 +65,7 @@ class LibrarianAssistant:
     
     def agent_invokations(self) -> list[AgentInvokation]:
         invokations = [
-            TextInvokation(role=ROLES.SYSTEM, text=self.agent.instructions, usage=InvokationUsage(0,0))
+            TextInvokation(role=ROLES.SYSTEM, text=self.agent.instructions, usage=None)
         ]
 
         for message in self.history.messages:
@@ -86,7 +86,7 @@ class LibrarianAssistant:
         if 'usage' in message.metadata:
             return InvokationUsage(message.metadata['usage'].prompt_tokens, message.metadata['usage'].completion_tokens)
         else:
-            return InvokationUsage(0, 0)
+            return None
             
     def reset(self) -> None:
         self.history.messages.clear()
