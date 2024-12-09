@@ -1,5 +1,6 @@
+from agent.agent_roles import ROLES
 from plugins.book_repository_plugin import BookRepositoryPlugin
-from agent.agent_record import AgentRecord, AgentToolRecord, AgentTextRecord, UsageRecord
+from agent.agent_invokation import AgentInvokation, FunctionInvokation, TextInvokation, InvokationUsage
 
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion, AzureAudioToText
@@ -18,7 +19,7 @@ from semantic_kernel.contents.function_call_content import FunctionCallContent
 from semantic_kernel.contents.function_result_content import FunctionResultContent
 from semantic_kernel.contents.utils.author_role import AuthorRole
 
-class CoffeeAssistant:
+class LibrarianAssistant:
     def __init__(self):
         self.kernel = Kernel()
         self.kernel.add_service(AzureChatCompletion(
@@ -41,7 +42,7 @@ class CoffeeAssistant:
         self.agent = ChatCompletionAgent(
             service_id='chat_completion',
             kernel=self.kernel,
-            name='CoffeeAssistant',
+            name='LibrarianAssistant',
             instructions="""
                 You are a knowledgeable book assistant who helps readers explore and understand literature. You provide thoughtful analysis of themes, characters, and writing styles while avoiding spoilers unless explicitly requested.
 
@@ -62,8 +63,10 @@ class CoffeeAssistant:
         user_message = await self.audio_to_text_service.get_text_content(AudioContent.from_audio_file(audio_file))
         return user_message.text
     
-    def records(self) -> list[AgentRecord]:
-        records = []
+    def agent_invokations(self) -> list[AgentInvokation]:
+        invokations = [
+            TextInvokation(role=ROLES.SYSTEM, text=self.agent.instructions, usage=InvokationUsage(0,0))
+        ]
 
         for message in self.history.messages:
             role = message.role
@@ -71,19 +74,19 @@ class CoffeeAssistant:
             
             for item in message.items:
                 if isinstance(item, TextContent):
-                    records.append(AgentTextRecord(role, item.text, usage))
+                    invokations.append(TextInvokation(role, item.text, usage))
                 elif isinstance(item, FunctionCallContent):
-                    records.append(AgentToolRecord(role, item.plugin_name, item.function_name, item.arguments, usage))
-                elif isinstance(item, FunctionResultContent) and isinstance(records[-1], AgentToolRecord):
-                    records[-1].add_result(item.result)
+                    invokations.append(FunctionInvokation(role, item.plugin_name, item.function_name, item.arguments, usage))
+                elif isinstance(item, FunctionResultContent) and isinstance(invokations[-1], FunctionInvokation):
+                    invokations[-1].add_result(item.result)
 
-        return records
+        return invokations
 
-    def __get_usage(self, message: ChatMessageContent) -> UsageRecord:
+    def __get_usage(self, message: ChatMessageContent) -> InvokationUsage:
         if 'usage' in message.metadata:
-            return UsageRecord(message.metadata['usage'].prompt_tokens, message.metadata['usage'].completion_tokens)
+            return InvokationUsage(message.metadata['usage'].prompt_tokens, message.metadata['usage'].completion_tokens)
         else:
-            return UsageRecord(0, 0)
+            return InvokationUsage(0, 0)
             
     def reset(self) -> None:
         self.history.messages.clear()

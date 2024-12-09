@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 from agent.agent_roles import ROLES
 
-class UsageRecord:
+class InvokationUsage:
     prompt_tokens: str
     completion_tokens: str
     
@@ -12,9 +12,9 @@ class UsageRecord:
         self.prompt_tokens = prompt
         self.completion_tokens = completion
 
-class AgentRecord(ABC):
+class AgentInvokation(ABC):
     role: str
-    usage: UsageRecord
+    usage: InvokationUsage
     
     def render_usage(self):
         if self.usage is not None:
@@ -26,13 +26,13 @@ class AgentRecord(ABC):
     def render(self):
         pass
 
-class AgentToolRecord(AgentRecord):
+class FunctionInvokation(AgentInvokation):
     plugin_name: str
     function_name: str
     function_result: str
     function_arguments: str
     
-    def __init__(self, role: str, plugin_name: str, function_name: str, arguments: str, usage: UsageRecord):
+    def __init__(self, role: str, plugin_name: str, function_name: str, arguments: str, usage: InvokationUsage):
         self.role = role
         self.plugin_name = plugin_name
         self.function_name = function_name
@@ -62,10 +62,10 @@ class AgentToolRecord(AgentRecord):
         data = json.loads(self.function_arguments)
         return '\n'.join([f'\t<i>{key}</i>: <strong>{value}</strong>' for key, value in data.items()])
 
-class AgentTextRecord(AgentRecord):
+class TextInvokation(AgentInvokation):
     text: str
 
-    def __init__(self, role: str, text: str, usage: UsageRecord):
+    def __init__(self, role: str, text: str, usage: InvokationUsage):
         self.role = role
         self.text = text
         self.usage = usage
