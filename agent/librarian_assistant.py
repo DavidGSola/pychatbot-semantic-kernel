@@ -3,15 +3,16 @@ from plugins.book_repository_plugin import BookRepositoryPlugin
 from agent.agent_invokation import AgentInvokation, FunctionInvokation, TextInvokation, InvokationUsage
 
 from semantic_kernel import Kernel
-from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion, AzureAudioToText
+from semantic_kernel.connectors.ai.open_ai import (
+    AzureChatCompletion, 
+    AzureAudioToText, 
+    AzureTextToAudio, 
+    AzureChatPromptExecutionSettings,
+    OpenAITextToAudioExecutionSettings)
 from semantic_kernel.connectors.ai.function_choice_behavior import FunctionChoiceBehavior
-from semantic_kernel.connectors.ai.open_ai.prompt_execution_settings.azure_chat_prompt_execution_settings import (
-    AzureChatPromptExecutionSettings
-)
 from semantic_kernel.agents import ChatCompletionAgent
 
 from semantic_kernel.contents import AudioContent, ChatHistory
-from semantic_kernel.functions.kernel_arguments import KernelArguments
 
 from semantic_kernel.contents.chat_message_content import ChatMessageContent
 from semantic_kernel.contents.text_content import TextContent
@@ -27,11 +28,16 @@ class LibrarianAssistant:
         ))
         
         self.kernel.add_service(AzureAudioToText(
-            service_id='audio_service'
+            service_id='audio_to_text_service'
+        ))
+
+        self.kernel.add_service(AzureTextToAudio(
+            service_id='text_to_audio_service'
         ))
         
         self.chat_service:AzureChatCompletion = self.kernel.get_service(type=AzureChatCompletion)
         self.audio_to_text_service:AzureAudioToText = self.kernel.get_service(type=AzureAudioToText)
+        self.text_to_audio_service:AzureTextToAudio = self.kernel.get_service(type=AzureTextToAudio)
 
         self.kernel.add_plugin(BookRepositoryPlugin(), plugin_name="BookRepositoryPlugin")
         self.kernel.add_plugin(parent_directory="./plugins", plugin_name="poem_plugin")
@@ -63,6 +69,10 @@ class LibrarianAssistant:
         user_message = await self.audio_to_text_service.get_text_content(AudioContent.from_audio_file(audio_file))
         return user_message.text
     
+    async def generate_audio(self, message: str) -> bytes:
+        audio_content = await self.text_to_audio_service.get_audio_content(message, OpenAITextToAudioExecutionSettings(response_format="wav"))
+        return audio_content.data
+
     def agent_invokations(self) -> list[AgentInvokation]:
         invokations = [
             TextInvokation(role=ROLES.SYSTEM, text=self.agent.instructions, usage=None)

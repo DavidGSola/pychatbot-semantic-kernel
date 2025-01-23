@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from typing import List, Tuple
 from agent.librarian_assistant import LibrarianAssistant
+from audio.audio_player import AudioPlayer
 from audio.audio_recorder import AudioRecorder
 from nicegui import ui
 
@@ -13,6 +14,9 @@ assistant:LibrarianAssistant = LibrarianAssistant()
 recorder:AudioRecorder = AudioRecorder()
 messages: List[Tuple[users.User, str, str]] = []
 spinners = []
+config = {
+    'audio': False
+}
 
 bg_color = '#1B4242'
 secondary_color = '#d99a9a'
@@ -42,6 +46,11 @@ async def call_assistant(text: str):
     add_message('user', text)
     result = await assistant.call(text)
     add_message('assistant', result)
+    
+    if config['audio']:
+        player = AudioPlayer()
+        audio = await assistant.generate_audio(result)
+        player.play_wav_from_bytes(audio)
     
     swap_visibility(spinners)
 
@@ -137,13 +146,24 @@ def spinner():
     chat_spinner.visible = False
     spinners.append(chat_spinner)
 
-def settings():
+def switch_audio():
+    config['audio'] = not config['audio']
+    settings.refresh()
+
+@ui.refreshable
+def settings() -> None:
+    audio_enabled = config['audio']
+    audio_icon = 'volume_up' if audio_enabled else 'volume_off'
+    audio_text = 'On' if audio_enabled else 'Off'
+
     with ui.page_sticky(x_offset=18, y_offset=18).props('position=top-right'):
-        with ui.element('q-fab').props(f'icon=settings color=secondary direction=down').classes('self-end'):
-            ui.element('q-fab-action').props('icon=restore color=secondary') \
+        with ui.row().classes('flex flex-col gap-1'):
+            ui.button(audio_text).props(f'icon={audio_icon} color=secondary').classes('w-32') \
+                .on('click', lambda: switch_audio()).tooltip(audio_text)
+            ui.button('Reset').props('icon=restore color=secondary').classes('w-32')  \
                 .on('click', lambda: reset_conversation()).tooltip('Clear conversation')
-            ui.element('q-fab-action').props('icon=help color=secondary') \
-                .on('click', lambda: show_about()).tooltip('About')
+            ui.button('About').props('icon=help color=secondary').classes('w-32')  \
+                .on('click', lambda: show_about())
                 
 @ui.page('/')
 async def main():
@@ -156,7 +176,7 @@ async def main():
     await ui.context.client.connected()
     
 if __name__ in {"__main__", "__mp_main__"}:
-    load_dotenv()
+    load_dotenv(override=True)
 
     users.add('user')
     users.add('assistant')
