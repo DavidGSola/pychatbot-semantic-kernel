@@ -70,8 +70,7 @@ class LibrarianAssistant:
         return user_message.text
     
     async def generate_audio(self, message: str) -> bytes:
-        audio_content = await self.text_to_audio_service.get_audio_content(message, OpenAITextToAudioExecutionSettings(response_format="wav")
-)
+        audio_content = await self.text_to_audio_service.get_audio_content(message, OpenAITextToAudioExecutionSettings(response_format="wav"))
         return audio_content.data
 
     def agent_invokations(self) -> list[AgentInvokation]:
