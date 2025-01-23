@@ -13,6 +13,9 @@ assistant:LibrarianAssistant = LibrarianAssistant()
 recorder:AudioRecorder = AudioRecorder()
 messages: List[Tuple[users.User, str, str]] = []
 spinners = []
+config = {
+    'audio': False
+}
 
 bg_color = '#1B4242'
 secondary_color = '#d99a9a'
@@ -42,6 +45,9 @@ async def call_assistant(text: str):
     add_message('user', text)
     result = await assistant.call(text)
     add_message('assistant', result)
+    
+    if config['audio']:
+        audio = await assistant.generate_audio(result)
     
     swap_visibility(spinners)
 
@@ -137,9 +143,20 @@ def spinner():
     chat_spinner.visible = False
     spinners.append(chat_spinner)
 
-def settings():
+def switch_audio():
+    config['audio'] = not config['audio']
+    settings.refresh()
+
+@ui.refreshable
+def settings() -> None:
+    audio_enabled = config['audio']
+    audio_icon = 'volume_up' if audio_enabled else 'volume_off'
+    audio_text = 'Switch to off' if audio_enabled else 'Switch to on'
+
     with ui.page_sticky(x_offset=18, y_offset=18).props('position=top-right'):
         with ui.element('q-fab').props(f'icon=settings color=secondary direction=down').classes('self-end'):
+            ui.element('q-fab-action').props(f'icon={audio_icon} color=secondary') \
+                .on('click', lambda: switch_audio()).tooltip(audio_text)
             ui.element('q-fab-action').props('icon=restore color=secondary') \
                 .on('click', lambda: reset_conversation()).tooltip('Clear conversation')
             ui.element('q-fab-action').props('icon=help color=secondary') \
