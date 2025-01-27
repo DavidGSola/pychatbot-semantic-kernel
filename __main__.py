@@ -1,7 +1,9 @@
-from helpers import get_libraries, swap_visibility
-import user.users as users
+import os
 import markdown2
 
+import user.users as users
+
+from helpers import get_libraries, swap_visibility
 from dotenv import load_dotenv
 from datetime import datetime
 from typing import List, Tuple
@@ -44,13 +46,11 @@ async def call_assistant(text: str):
     swap_visibility(spinners)    
     
     add_message('user', text)
-    result = await assistant.call(text)
-    add_message('assistant', result)
+    response = await assistant.call(text)
+    add_message('assistant', response)
     
     if config['audio']:
-        player = AudioPlayer()
-        audio = await assistant.generate_audio(result)
-        player.play_wav_from_bytes(audio)
+        await reproduce_as_audio(response)
     
     swap_visibility(spinners)
 
@@ -72,9 +72,12 @@ def reset_conversation() -> None:
     ui.notify('Conversation cleared')
 
 def show_about() -> None:
+    llm_service = os.environ['GLOBAL_LLM_SERVICE']
+
     with ui.dialog() as about_dialog, ui.card():
         ui.label('🐍 PyChatbot for Semantic Kernel').classes('text-semibold text-xl')
         ui.label('\n'.join(get_libraries())).style('white-space: pre-wrap')
+        ui.label(f'\nPowered by {llm_service}')
 
         ui.button('Close', on_click=about_dialog.close)
 
@@ -127,9 +130,25 @@ async def stop_recording(button: ui.button):
     button.text = ""
     recorder.stop_recording()
     transcription = await assistant.transcript_audio(recorder.output_filepath)
-    await call_assistant(transcription)
 
+    if transcription == '':
+        show_toast('Current LLM provider does not support AudioToText services')
+    else:        
+        await call_assistant(transcription)
+        
     recorder.remove_output_file()
+
+async def reproduce_as_audio(text: str):
+    player = AudioPlayer()
+    audio = await assistant.generate_audio(text)
+
+    if audio == None:
+        show_toast('Current LLM provider does not support TextToAudio services')
+    else:
+        player.play_wav_from_bytes(audio)
+
+def show_toast(text: str):
+    ui.notify(text, close_button='OK')
 
 def footer():
     with ui.footer().classes('w-full max-w-4xl mx-auto py-6'), ui.column().classes('w-full'):

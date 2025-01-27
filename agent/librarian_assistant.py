@@ -1,32 +1,41 @@
+import os
+
 from agent.agent_roles import ROLES
-from plugins.book_repository_plugin import BookRepositoryPlugin
 from agent.agent_invokation import AgentInvokation, FunctionInvokation, TextInvokation, InvokationUsage
 
+from plugins.book_repository_plugin import BookRepositoryPlugin
+
 from semantic_kernel import Kernel
-from semantic_kernel.connectors.ai.open_ai import (
-    AzureChatCompletion, 
-    AzureAudioToText, 
-    AzureTextToAudio, 
-    AzureChatPromptExecutionSettings,
-    OpenAITextToAudioExecutionSettings)
-from semantic_kernel.connectors.ai.function_choice_behavior import FunctionChoiceBehavior
+
 from semantic_kernel.agents import ChatCompletionAgent
-
 from semantic_kernel.contents import AudioContent, ChatHistory
-
 from semantic_kernel.contents.chat_message_content import ChatMessageContent
 from semantic_kernel.contents.text_content import TextContent
 from semantic_kernel.contents.function_call_content import FunctionCallContent
 from semantic_kernel.contents.function_result_content import FunctionResultContent
 from semantic_kernel.contents.utils.author_role import AuthorRole
+from semantic_kernel.connectors.ai.chat_completion_client_base import ChatCompletionClientBase
+from semantic_kernel.connectors.ai.function_choice_behavior import FunctionChoiceBehavior
+
+from semantic_kernel.connectors.ai.open_ai import (
+    AzureChatCompletion, 
+    AzureAudioToText, 
+    AzureTextToAudio, 
+    AzureChatPromptExecutionSettings,
+    OpenAITextToAudioExecutionSettings
+)
+
+from semantic_kernel.connectors.ai.ollama import (
+    OllamaChatCompletion, OllamaChatPromptExecutionSettings
+)
 
 class LibrarianAssistant:
-    def __init__(self):
-        self.kernel = Kernel()
+
+    def __init_azure_open_ai(self) -> AzureChatPromptExecutionSettings:
         self.kernel.add_service(AzureChatCompletion(
             service_id='chat_completion'
         ))
-        
+
         self.kernel.add_service(AzureAudioToText(
             service_id='audio_to_text_service'
         ))
@@ -34,16 +43,37 @@ class LibrarianAssistant:
         self.kernel.add_service(AzureTextToAudio(
             service_id='text_to_audio_service'
         ))
-        
-        self.chat_service:AzureChatCompletion = self.kernel.get_service(type=AzureChatCompletion)
+
+        self.chat_service:ChatCompletionClientBase = self.kernel.get_service(type=AzureChatCompletion)
         self.audio_to_text_service:AzureAudioToText = self.kernel.get_service(type=AzureAudioToText)
         self.text_to_audio_service:AzureTextToAudio = self.kernel.get_service(type=AzureTextToAudio)
+        
+        settings = AzureChatPromptExecutionSettings(tool_choice='auto')
+        settings.function_choice_behavior = FunctionChoiceBehavior.Auto(filters={})
+
+        return settings
+
+    def __init_ollama(self) -> OllamaChatPromptExecutionSettings:
+        self.kernel.add_service(OllamaChatCompletion(
+            service_id='chat_completion'
+        ))
+        
+        self.chat_service:ChatCompletionClientBase = self.kernel.get_service(type=OllamaChatCompletion)
+        
+        return OllamaChatPromptExecutionSettings()
+
+    def __init__(self):
+        llm_service = os.environ['GLOBAL_LLM_SERVICE']
+
+        self.kernel = Kernel()
+
+        if llm_service == 'AzureOpenAI':
+            settings = self.__init_azure_open_ai()
+        elif llm_service == 'Ollama':
+            settings = self.__init_ollama()
 
         self.kernel.add_plugin(BookRepositoryPlugin(), plugin_name="BookRepositoryPlugin")
         self.kernel.add_plugin(parent_directory="./plugins", plugin_name="poem_plugin")
-
-        settings = AzureChatPromptExecutionSettings(tool_choice='auto')
-        settings.function_choice_behavior = FunctionChoiceBehavior.Auto(filters={})
         
         self.agent = ChatCompletionAgent(
             service_id='chat_completion',
@@ -66,10 +96,18 @@ class LibrarianAssistant:
             return str(response)
     
     async def transcript_audio(self, audio_file: str) -> (str):
+        if not hasattr(self, 'audio_to_text_service'):
+            print('Current LLM provider does not support AudioToText services')
+            return ''
+        
         user_message = await self.audio_to_text_service.get_text_content(AudioContent.from_audio_file(audio_file))
         return user_message.text
     
     async def generate_audio(self, message: str) -> bytes:
+        if not hasattr(self, 'text_to_audio_service'):
+            print('Current LLM provider does not support TextToAudio services')
+            return None
+        
         audio_content = await self.text_to_audio_service.get_audio_content(message, OpenAITextToAudioExecutionSettings(response_format="wav"))
         return audio_content.data
 
