@@ -1,4 +1,5 @@
 import os
+from typing import Type
 
 from agent.agent_roles import ROLES
 from agent.agent_invokation import AgentInvokation, FunctionInvokation, TextInvokation, InvokationUsage
@@ -15,52 +16,27 @@ from semantic_kernel.contents.function_call_content import FunctionCallContent
 from semantic_kernel.contents.function_result_content import FunctionResultContent
 from semantic_kernel.contents.utils.author_role import AuthorRole
 from semantic_kernel.connectors.ai.chat_completion_client_base import ChatCompletionClientBase
+from semantic_kernel.connectors.ai.audio_to_text_client_base import AudioToTextClientBase
+from semantic_kernel.connectors.ai.text_to_audio_client_base import TextToAudioClientBase
 from semantic_kernel.connectors.ai.function_choice_behavior import FunctionChoiceBehavior
+from semantic_kernel.connectors.ai.prompt_execution_settings import PromptExecutionSettings
+
 
 from semantic_kernel.connectors.ai.open_ai import (
     AzureChatCompletion, 
+    OpenAIChatCompletion,
     AzureAudioToText, 
+    OpenAIAudioToText,
     AzureTextToAudio, 
-    AzureChatPromptExecutionSettings,
-    OpenAITextToAudioExecutionSettings
+    OpenAITextToAudio,
+    OpenAITextToAudioExecutionSettings,
 )
 
 from semantic_kernel.connectors.ai.ollama import (
-    OllamaChatCompletion, OllamaChatPromptExecutionSettings
+    OllamaChatCompletion
 )
 
 class LibrarianAssistant:
-
-    def __init_azure_open_ai(self) -> AzureChatPromptExecutionSettings:
-        self.kernel.add_service(AzureChatCompletion(
-            service_id='chat_completion'
-        ))
-
-        self.kernel.add_service(AzureAudioToText(
-            service_id='audio_to_text_service'
-        ))
-
-        self.kernel.add_service(AzureTextToAudio(
-            service_id='text_to_audio_service'
-        ))
-
-        self.chat_service:ChatCompletionClientBase = self.kernel.get_service(type=AzureChatCompletion)
-        self.audio_to_text_service:AzureAudioToText = self.kernel.get_service(type=AzureAudioToText)
-        self.text_to_audio_service:AzureTextToAudio = self.kernel.get_service(type=AzureTextToAudio)
-        
-        settings = AzureChatPromptExecutionSettings(tool_choice='auto')
-        settings.function_choice_behavior = FunctionChoiceBehavior.Auto(filters={})
-
-        return settings
-
-    def __init_ollama(self) -> OllamaChatPromptExecutionSettings:
-        self.kernel.add_service(OllamaChatCompletion(
-            service_id='chat_completion'
-        ))
-        
-        self.chat_service:ChatCompletionClientBase = self.kernel.get_service(type=OllamaChatCompletion)
-        
-        return OllamaChatPromptExecutionSettings()
 
     def __init__(self):
         llm_service = os.environ['GLOBAL_LLM_SERVICE']
@@ -69,6 +45,8 @@ class LibrarianAssistant:
 
         if llm_service == 'AzureOpenAI':
             settings = self.__init_azure_open_ai()
+        elif llm_service == 'OpenAI':
+            settings = self.__init_open_ai()
         elif llm_service == 'Ollama':
             settings = self.__init_ollama()
 
@@ -88,7 +66,41 @@ class LibrarianAssistant:
         )
         
         self.history = ChatHistory()
+
+    def __init_services(self, chat_class: Type[ChatCompletionClientBase], 
+                        audio_to_text_class: Type[AudioToTextClientBase] = None, 
+                        text_to_audio_class: Type[TextToAudioClientBase] = None) -> PromptExecutionSettings:
+       
+        self.kernel.add_service(chat_class(service_id='chat_completion'))  
+        self.chat_service: ChatCompletionClientBase = self.kernel.get_service(type=chat_class)  
         
+        if text_to_audio_class:  
+            self.kernel.add_service(audio_to_text_class(service_id='audio_to_text_service'))  
+            self.audio_to_text_service: AudioToTextClientBase = self.kernel.get_service(type=audio_to_text_class)  
+        
+        if text_to_audio_class:  
+            self.kernel.add_service(text_to_audio_class(service_id='text_to_audio_service'))  
+            self.text_to_audio_service: TextToAudioClientBase = self.kernel.get_service(type=text_to_audio_class)  
+
+        settings = self.kernel.get_prompt_execution_settings_from_service_id(service_id='chat_completion')  
+        settings.function_choice_behavior = FunctionChoiceBehavior.Auto()  
+        return settings
+
+    def __init_azure_open_ai(self) -> PromptExecutionSettings:  
+        return self.__init_services(AzureChatCompletion, AzureAudioToText, AzureTextToAudio)  
+    
+    def __init_open_ai(self) -> PromptExecutionSettings:  
+        return self.__init_services(OpenAIChatCompletion, OpenAIAudioToText, OpenAITextToAudio)  
+      
+    def __init_ollama(self) -> PromptExecutionSettings:  
+        support_tool = os.environ.get('OLLAMA_SUPPORT_TOOL', "False") == "True"  
+        
+        settings = self.__init_services(OllamaChatCompletion)
+        
+        if support_tool:
+            settings.function_choice_behavior = FunctionChoiceBehavior.Auto()
+        return settings
+
     async def call(self, user_message: str) -> str:
         self.history.add_message(ChatMessageContent(role=AuthorRole.USER, content=user_message))
         async for response in self.agent.invoke(self.history):
