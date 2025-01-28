@@ -101,11 +101,10 @@ class LibrarianAssistant:
             settings.function_choice_behavior = FunctionChoiceBehavior.Auto()
         return settings
 
-    async def call(self, user_message: str) -> str:
+    async def call(self, user_message: str):
         self.history.add_message(ChatMessageContent(role=AuthorRole.USER, content=user_message))
-        async for response in self.agent.invoke(self.history):
-            self.history.add_message(response)
-            return str(response)
+        async for partial_response in self.agent.invoke_stream(self.history):
+            yield str(partial_response)
     
     async def transcript_audio(self, audio_file: str) -> (str):
         if not hasattr(self, 'audio_to_text_service'):
