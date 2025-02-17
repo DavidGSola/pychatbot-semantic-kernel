@@ -42,13 +42,7 @@ class LibrarianAssistant:
         llm_service = os.environ['GLOBAL_LLM_SERVICE']
 
         self.kernel = Kernel()
-
-        if llm_service == 'AzureOpenAI':
-            settings = self.__init_azure_open_ai()
-        elif llm_service == 'OpenAI':
-            settings = self.__init_open_ai()
-        elif llm_service == 'Ollama':
-            settings = self.__init_ollama()
+        settings = self.__init_services()
 
         self.kernel.add_plugin(BookRepositoryPlugin(), plugin_name="BookRepositoryPlugin")
         self.kernel.add_plugin(parent_directory="./plugins", plugin_name="poem_plugin")
@@ -67,38 +61,42 @@ class LibrarianAssistant:
         
         self.history = ChatHistory()
 
-    def __init_services(self, chat_class: Type[ChatCompletionClientBase], 
-                        audio_to_text_class: Type[AudioToTextClientBase] = None, 
-                        text_to_audio_class: Type[TextToAudioClientBase] = None) -> PromptExecutionSettings:
-       
-        self.kernel.add_service(chat_class(service_id='chat_completion'))  
-        self.chat_service: ChatCompletionClientBase = self.kernel.get_service(type=chat_class)  
-        
-        if text_to_audio_class:  
-            self.kernel.add_service(audio_to_text_class(service_id='audio_to_text_service'))  
-            self.audio_to_text_service: AudioToTextClientBase = self.kernel.get_service(type=audio_to_text_class)  
-        
-        if text_to_audio_class:  
-            self.kernel.add_service(text_to_audio_class(service_id='text_to_audio_service'))  
-            self.text_to_audio_service: TextToAudioClientBase = self.kernel.get_service(type=text_to_audio_class)  
+    def __init_services(self):
+        llm_service = os.environ['GLOBAL_LLM_SERVICE']
+        services = {  
+            'AzureOpenAI': [  
+                ('chat_completion', AzureChatCompletion),  
+                ('audio_to_text_service', AzureAudioToText),  
+                ('text_to_audio_service', AzureTextToAudio)  
+            ],  
+            'OpenAI': [  
+                ('chat_completion', OpenAIChatCompletion),  
+                ('audio_to_text_service', OpenAIAudioToText),  
+                ('text_to_audio_service', OpenAITextToAudio)  
+            ],  
+            'Ollama': [  
+                ('chat_completion', OllamaChatCompletion)  
+            ]  
+        }
 
+        for service_id, service_class in services.get(llm_service, []):  
+            self.kernel.add_service(service_class(service_id=service_id))  
+
+        self.chat_service: ChatCompletionClientBase = self.kernel.get_service(service_id='chat_completion')
+        
+        if llm_service in ['AzureOpenAI', 'OpenAI']:
+            self.audio_to_text_service: AudioToTextClientBase = self.kernel.get_service(service_id='audio_to_text_service')
+            self.text_to_audio_service: TextToAudioClientBase = self.kernel.get_service(service_id='text_to_audio_service')
+
+        return self.__init_settings()
+
+    def __init_settings(self) -> PromptExecutionSettings:
+        support_tool = os.environ.get('OLLAMA_SUPPORT_TOOL', "False") == "True"
         settings = self.kernel.get_prompt_execution_settings_from_service_id(service_id='chat_completion')  
-        settings.function_choice_behavior = FunctionChoiceBehavior.Auto()  
-        return settings
+        settings.function_choice_behavior = (  
+            FunctionChoiceBehavior.Auto() if support_tool else FunctionChoiceBehavior.NoneInvoke()
+        )
 
-    def __init_azure_open_ai(self) -> PromptExecutionSettings:  
-        return self.__init_services(AzureChatCompletion, AzureAudioToText, AzureTextToAudio)  
-    
-    def __init_open_ai(self) -> PromptExecutionSettings:  
-        return self.__init_services(OpenAIChatCompletion, OpenAIAudioToText, OpenAITextToAudio)  
-      
-    def __init_ollama(self) -> PromptExecutionSettings:  
-        support_tool = os.environ.get('OLLAMA_SUPPORT_TOOL', "False") == "True"  
-        
-        settings = self.__init_services(OllamaChatCompletion)
-        
-        if support_tool:
-            settings.function_choice_behavior = FunctionChoiceBehavior.Auto()
         return settings
 
     async def call(self, user_message: str) -> str:
