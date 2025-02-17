@@ -12,9 +12,15 @@ from audio.audio_player import AudioPlayer
 from audio.audio_recorder import AudioRecorder
 from nicegui import ui
 
+class Message:
+    def __init__(self, user: users.User, message: str, stamp: str):
+        self.user = user
+        self.message = message
+        self.stamp = stamp
+
 assistant:LibrarianAssistant = LibrarianAssistant()
 recorder:AudioRecorder = AudioRecorder()
-messages: List[Tuple[users.User, str, str]] = []
+messages: List[Message] = []
 spinners = []
 config = {
     'audio': False
@@ -46,8 +52,10 @@ async def call_assistant(text: str):
     swap_visibility(spinners)    
     
     add_message('user', text)
-    response = await assistant.call(text)
-    add_message('assistant', response)
+    response = ''
+    async for partial_response in assistant.call(text):  
+        response += partial_response  
+        update_partial_response('assistant', response)
     
     if config['audio']:
         await reproduce_as_audio(response)
@@ -59,7 +67,19 @@ async def call_assistant(text: str):
 def add_message(user_id: str, text: str) -> None:
     stamp = datetime.now().strftime('%X')
     user = users.find(user_id)
-    messages.append((user, text, stamp))
+    messages.append(Message(user, text, stamp))
+    chat_messages.refresh()
+
+def update_partial_response(user_id: str, text:str) -> None:
+    user = users.find(user_id)
+    last_message = messages[-1]
+
+    if last_message.user == user:
+        last_message.message = text
+    else:
+        stamp = datetime.now().strftime('%X')
+        messages.append(Message(user, text, stamp))
+    
     chat_messages.refresh()
     
 def reset_conversation() -> None:
@@ -93,9 +113,9 @@ def move_to_last_message():
 @ui.refreshable
 def chat_messages(user_id: str) -> None:
     if messages:
-        for user, text, stamp in messages:
-            bg_color = 'accent' if user.id == user_id else 'secondary'
-            ui.chat_message(text=markdown2.markdown(text), stamp=stamp, avatar=user.avatar, sent=user.id == user_id, text_html=True).props(f'bg-color={bg_color}')
+        for message in messages:
+            bg_color = 'accent' if message.user.id == user_id else 'secondary'
+            ui.chat_message(text=markdown2.markdown(message.message), stamp=message.stamp, avatar=message.user.avatar, sent=message.user.id == user_id, text_html=True).props(f'bg-color={bg_color}')
     else:
         ui.label('Start messaging with your bot').classes('mx-auto my-36 text-lg text-emerald-300')
     
